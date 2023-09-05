@@ -32,7 +32,7 @@ export default function TaskList() {
           estimateAt={new Date()}
           doneAt={new Date()}
         />
-        <Task desc="Ler Livro" estimateAt={new Date()} doneAt={new Date()} />
+        <Task desc="Ler Livro" estimateAt={new Date()}/>
       </View>
     </View>
   );
