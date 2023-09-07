@@ -1,13 +1,38 @@
 import { View, Text, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
+import {
+  useFonts,
+  Lato_300Light,
+  Lato_700Bold,
+  Lato_400Regular,
+} from "@expo-google-fonts/lato";
+
+import moment from "moment";
+import "moment/locale/pt-br";
 
 export default (props) => {
+  const [fonteLoaded] = useFonts({
+    Lato_300Light,
+    Lato_700Bold,
+    Lato_400Regular,
+  });
+
+  if (!fonteLoaded) {
+    return null;
+  }
+
+  const doneOrNotStyle =
+    props.doneAt != null ? { textDecorationLine: "line-through" } : {};
+
+  const date = props.doneAt ? props.doneAt : props.estimateAt;
+
+  const formattedDate = moment(date).locale("pt-br").format("ddd, D [de] MMMM");
   return (
     <View style={styles.container}>
       <View style={styles.checkContainer}>{getCheckView(props.doneAt)}</View>
       <View>
-        <Text>{props.desc}</Text>
-        <Text>{props.estimateAt + ""}</Text>
+        <Text style={[styles.desc, doneOrNotStyle]}>{props.desc}</Text>
+        <Text style={styles.date}>{formattedDate}</Text>
       </View>
     </View>
   );
@@ -52,5 +77,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#4D7031",
     alignItems: "center",
     justifyContent: "center",
+  },
+  desc: {
+    fontFamily: "Lato_400Regular",
+    color: "#222",
+    fontSize: 15,
+  },
+  date: {
+    fontFamily: "Lato_400Regular",
+    color: "#555",
+    fontSize: 12,
   },
 });

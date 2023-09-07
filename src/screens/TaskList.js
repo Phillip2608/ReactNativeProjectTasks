@@ -2,7 +2,7 @@ import { View, Text, ImageBackground, StyleSheet } from "react-native";
 import { useFonts, Lato_300Light, Lato_700Bold } from "@expo-google-fonts/lato";
 import todayImage from "../../assets/imgs/today.jpg";
 
-import moment from "moment/moment";
+import moment from "moment";
 import "moment/locale/pt-br";
 import Task from "../components/Task";
 
@@ -32,7 +32,7 @@ export default function TaskList() {
           estimateAt={new Date()}
           doneAt={new Date()}
         />
-        <Task desc="Ler Livro" estimateAt={new Date()}/>
+        <Task desc="Ler Livro" estimateAt={new Date()} />
       </View>
     </View>
   );
