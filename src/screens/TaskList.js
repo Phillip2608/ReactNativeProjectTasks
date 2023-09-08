@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,9 +15,12 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import moment from "moment";
 import "moment/locale/pt-br";
 import Task from "../components/Task";
+import AddTask from "./AddTask";
 
 export default function TaskList() {
   const [showDoneTasks, setShowDoneTasks] = useState(true);
+  const [visibleTasks, setVisibleTasks] = useState([]);
+  const [showAddTask, setShowAddTask] = useState(false);
   const [tasks, setTasks] = useState([
     {
       id: Math.random(),
@@ -33,19 +36,22 @@ export default function TaskList() {
     },
   ]);
 
-  const [fonteLoaded] = useFonts({
-    Lato_300Light,
-    Lato_700Bold,
-  });
-
-  if (!fonteLoaded) {
-    return null;
-  }
-
   const today = moment().locale("pt-br").format("ddd, D [de] MMMM");
 
   function toggleFilter() {
-    setShowDoneTasks(!showDoneTasks);
+    setShowDoneTasks(!showDoneTasks, filterTasks());
+  }
+
+  function filterTasks() {
+    let vTasks = null;
+    if (showDoneTasks) {
+      vTasks = [...tasks];
+    } else {
+      const pending = (task) => task.doneAt === null;
+      vTasks = tasks.filter(pending);
+    }
+
+    setVisibleTasks(vTasks);
   }
 
   function toggleTask(taskId) {
@@ -56,11 +62,25 @@ export default function TaskList() {
       }
     });
 
-    setTasks(itens);
+    setTasks(itens, filterTasks());
+  }
+
+  useEffect(() => {
+    filterTasks();
+  }, [showDoneTasks]);
+
+  const [fonteLoaded] = useFonts({
+    Lato_300Light,
+    Lato_700Bold,
+  });
+
+  if (!fonteLoaded) {
+    return null;
   }
 
   return (
     <View style={styles.container}>
+      <AddTask isVisible={showAddTask} onCancel={() => setShowAddTask(false)} />
       <ImageBackground source={todayImage} style={styles.background}>
         <View style={styles.iconBar}>
           <TouchableOpacity onPress={toggleFilter}>
@@ -78,11 +98,18 @@ export default function TaskList() {
       </ImageBackground>
       <View style={styles.taskList}>
         <FlatList
-          data={tasks}
+          data={visibleTasks}
           keyExtractor={(item) => `${item.id}`}
           renderItem={({ item }) => <Task {...item} toggleTask={toggleTask} />}
         />
       </View>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setShowAddTask(true)}
+        activeOpacity={0.7}
+      >
+        <Icon name="plus" size={20} color="#FFF" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -120,5 +147,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     justifyContent: "flex-end",
     marginTop: Platform.OS === "ios" ? 40 : 30,
+  },
+  addButton: {
+    position: "absolute",
+    right: 30,
+    bottom: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#B33B44",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
