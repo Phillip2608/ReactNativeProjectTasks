@@ -1,4 +1,5 @@
 import {
+  Platform,
   Modal,
   View,
   StyleSheet,
@@ -16,9 +17,51 @@ import {
   Lato_700Bold,
 } from "@expo-google-fonts/lato";
 
+import DateTimePicker from "@react-native-community/datetimepicker";
+import moment from "moment";
+
 export default function AddTask(props) {
-  const iniState = { desc: "" };
+  const iniState = { desc: "", date: new Date(), showDatePicker: false };
   const [initialState, setInitialState] = useState({ ...iniState });
+
+  function save() {
+    const newTask = { desc: initialState.desc, date: initialState.date };
+
+    //! Condição
+    props.onSave && props.onSave(newTask);
+    setInitialState({ ...initialState });
+  }
+
+  function getDateTimePicker() {
+    let datePicker = (
+      <DateTimePicker
+        value={initialState.date}
+        onChange={(_, date) => setInitialState({ date, showDatePicker: false })}
+        mode="date"
+      />
+    );
+    const dateString = moment(initialState.date).format(
+      "ddd, D [de] MMMM [de] YYYY"
+    );
+
+    if (Platform.OS === "android") {
+      datePicker = (
+        <View>
+          <TouchableOpacity
+            onPress={() =>
+              setInitialState({ ...initialState, showDatePicker: true })
+            }
+          >
+            <Text style={styles.date}>{dateString}</Text>
+          </TouchableOpacity>
+          {initialState.showDatePicker && datePicker}
+        </View>
+      );
+    }
+
+    return datePicker;
+  }
+
   const [fonteLoaded] = useFonts({
     Lato_400Regular,
     Lato_700Bold,
@@ -44,13 +87,14 @@ export default function AddTask(props) {
           style={styles.input}
           placeholder="Informe a descrição"
           value={initialState.desc}
-          onChangeText={(desc) => setInitialState({ desc })}
+          onChangeText={(desc) => setInitialState({ ...initialState, desc })}
         />
+        {getDateTimePicker()}
         <View style={styles.btns}>
           <TouchableOpacity onPress={props.onCancel}>
             <Text style={styles.btn}>Cancelar</Text>
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={save}>
             <Text style={styles.btn}>Salvar</Text>
           </TouchableOpacity>
         </View>
@@ -95,5 +139,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E3E3E3",
     borderRadius: 6,
+  },
+  date: {
+    fontFamily: "Lato_400Regular",
+    fontSize: 20,
+    marginLeft: 15,
   },
 });

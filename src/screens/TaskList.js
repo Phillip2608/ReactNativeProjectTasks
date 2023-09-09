@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
+  Alert,
 } from "react-native";
 import { useFonts, Lato_300Light, Lato_700Bold } from "@expo-google-fonts/lato";
 import todayImage from "../../assets/imgs/today.jpg";
@@ -65,6 +66,24 @@ export default function TaskList() {
     setTasks(itens, filterTasks());
   }
 
+  function addTask(newTask) {
+    if (!newTask.desc || !newTask.desc.trim()) {
+      Alert.alert("Dados Inválidos", "Descrição não informada!");
+      return;
+    }
+
+    tasks.push({
+      id: Math.random(),
+      desc: newTask.desc,
+      estimateAt: newTask.date,
+      doneAt: null,
+    });
+    filterTasks();
+    setShowAddTask(false);
+
+    console.warn(tasks);
+  }
+
   useEffect(() => {
     filterTasks();
   }, [showDoneTasks]);
@@ -80,7 +99,11 @@ export default function TaskList() {
 
   return (
     <View style={styles.container}>
-      <AddTask isVisible={showAddTask} onCancel={() => setShowAddTask(false)} />
+      <AddTask
+        isVisible={showAddTask}
+        onCancel={() => setShowAddTask(false)}
+        onSave={addTask}
+      />
       <ImageBackground source={todayImage} style={styles.background}>
         <View style={styles.iconBar}>
           <TouchableOpacity onPress={toggleFilter}>
