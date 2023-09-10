@@ -29,7 +29,7 @@ export default function AddTask(props) {
 
     //! Condição
     props.onSave && props.onSave(newTask);
-    setInitialState({ ...initialState });
+    setInitialState(iniState);
   }
 
   function getDateTimePicker() {

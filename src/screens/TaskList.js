@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts, Lato_300Light, Lato_700Bold } from "@expo-google-fonts/lato";
 import todayImage from "../../assets/imgs/today.jpg";
 import Icon from "react-native-vector-icons/FontAwesome";
@@ -20,22 +21,9 @@ import AddTask from "./AddTask";
 
 export default function TaskList() {
   const [showDoneTasks, setShowDoneTasks] = useState(true);
-  const [visibleTasks, setVisibleTasks] = useState([]);
   const [showAddTask, setShowAddTask] = useState(false);
-  const [tasks, setTasks] = useState([
-    {
-      id: Math.random(),
-      desc: "Comprar livro de React Native",
-      estimateAt: new Date(),
-      doneAt: new Date(),
-    },
-    {
-      id: Math.random(),
-      desc: "Ler livro de React Native",
-      estimateAt: new Date(),
-      doneAt: null,
-    },
-  ]);
+  const [tasks, setTasks] = useState([]);
+  const [visibleTasks, setVisibleTasks] = useState([]);
 
   const today = moment().locale("pt-br").format("ddd, D [de] MMMM");
 
@@ -48,8 +36,7 @@ export default function TaskList() {
     if (showDoneTasks) {
       vTasks = [...tasks];
     } else {
-      const pending = (task) => task.doneAt === null;
-      vTasks = tasks.filter(pending);
+      vTasks = tasks.filter((task) => task.doneAt === null);
     }
 
     setVisibleTasks(vTasks);
@@ -64,6 +51,7 @@ export default function TaskList() {
     });
 
     setTasks(itens, filterTasks());
+    AsyncStorage.setItem("taskState", JSON.stringify(tasks));
   }
 
   function addTask(newTask) {
@@ -78,15 +66,28 @@ export default function TaskList() {
       estimateAt: newTask.date,
       doneAt: null,
     });
-    filterTasks();
-    setShowAddTask(false);
+    setShowAddTask(false, filterTasks());
+    AsyncStorage.setItem("taskState", JSON.stringify(tasks));
+  }
 
-    console.warn(tasks);
+  function deleteTask(id) {
+    const newArrTask = tasks.filter((task) => task.id !== id);
+    setTasks(newArrTask, filterTasks());
+    AsyncStorage.setItem("taskState", JSON.stringify(newArrTask));
   }
 
   useEffect(() => {
     filterTasks();
-  }, [showDoneTasks]);
+  }, [tasks, showDoneTasks]);
+
+  useEffect(() => {
+    async function getData() {
+      const taskString = await AsyncStorage.getItem("taskState");
+      const getTasks = JSON.parse(taskString);
+      setTasks(getTasks, filterTasks());
+    }
+    getData();
+  }, []);
 
   const [fonteLoaded] = useFonts({
     Lato_300Light,
@@ -123,7 +124,9 @@ export default function TaskList() {
         <FlatList
           data={visibleTasks}
           keyExtractor={(item) => `${item.id}`}
-          renderItem={({ item }) => <Task {...item} toggleTask={toggleTask} />}
+          renderItem={({ item }) => (
+            <Task {...item} toggleTask={toggleTask} onDelete={deleteTask} />
+          )}
         />
       </View>
       <TouchableOpacity
