@@ -34,9 +34,13 @@ export default function TaskList() {
   function filterTasks() {
     let vTasks = null;
     if (showDoneTasks) {
-      vTasks = [...tasks];
+      if (tasks) {
+        vTasks = [...tasks];
+      }
     } else {
-      vTasks = tasks.filter((task) => task.doneAt === null);
+      if (tasks) {
+        vTasks = tasks.filter((task) => task.doneAt === null);
+      }
     }
 
     setVisibleTasks(vTasks);
@@ -60,12 +64,24 @@ export default function TaskList() {
       return;
     }
 
-    tasks.push({
-      id: Math.random(),
-      desc: newTask.desc,
-      estimateAt: newTask.date,
-      doneAt: null,
-    });
+    if (!tasks) {
+      setTasks([
+        {
+          id: Math.random(),
+          desc: newTask.desc,
+          estimateAt: newTask.date,
+          doneAt: null,
+        },
+      ]);
+    } else {
+      tasks.push({
+        id: Math.random(),
+        desc: newTask.desc,
+        estimateAt: newTask.date,
+        doneAt: null,
+      });
+    }
+
     setShowAddTask(false, filterTasks());
     AsyncStorage.setItem("taskState", JSON.stringify(tasks));
   }
