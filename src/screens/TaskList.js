@@ -14,6 +14,9 @@ import { server, showError } from "../common";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts, Lato_300Light, Lato_700Bold } from "@expo-google-fonts/lato";
 import todayImage from "../../assets/imgs/today.jpg";
+import tomorrowImage from "../../assets/imgs/tomorrow.jpg";
+import weekImage from "../../assets/imgs/week.jpg";
+import monthImage from "../../assets/imgs/month.jpg";
 import Icon from "react-native-vector-icons/FontAwesome";
 
 import moment from "moment";
@@ -21,7 +24,7 @@ import "moment/locale/pt-br";
 import Task from "../components/Task";
 import AddTask from "./AddTask";
 
-export default function TaskList() {
+export default function TaskList(props) {
   const [showDoneTasks, setShowDoneTasks] = useState(true);
   const [showAddTask, setShowAddTask] = useState(false);
   const [tasks, setTasks] = useState([]);
@@ -31,7 +34,9 @@ export default function TaskList() {
 
   async function loadTasks() {
     try {
-      const maxDate = moment().format("YYYY-MM-DD 23:59:59");
+      const maxDate = moment()
+        .add({ days: props.daysAhead })
+        .format("YYYY-MM-DD 23:59:59");
       const res = await axios.get(`${server}/tasks?date=${maxDate}`);
       setTasks(res.data, filterTasks());
     } catch (e) {
@@ -93,6 +98,32 @@ export default function TaskList() {
     }
   }
 
+  function getImage() {
+    switch (props.daysAhead) {
+      case 0:
+        return todayImage;
+      case 1:
+        return tomorrowImage;
+      case 7:
+        return weekImage;
+      default:
+        return monthImage;
+    }
+  }
+
+  function getColor() {
+    switch (props.daysAhead) {
+      case 0:
+        return "#B13B44";
+      case 1:
+        return "#C9742E";
+      case 7:
+        return "#15721E";
+      default:
+        return "#1631BE";
+    }
+  }
+
   useEffect(() => {
     filterTasks();
   }, [tasks, showDoneTasks]);
@@ -123,8 +154,11 @@ export default function TaskList() {
         onCancel={() => setShowAddTask(false)}
         onSave={addTask}
       />
-      <ImageBackground source={todayImage} style={styles.background}>
+      <ImageBackground source={getImage()} style={styles.background}>
         <View style={styles.iconBar}>
+          <TouchableOpacity onPress={() => props.navigation.openDrawer()}>
+            <Icon name="bars" size={20} color="#FFF" />
+          </TouchableOpacity>
           <TouchableOpacity onPress={toggleFilter}>
             <Icon
               name={showDoneTasks ? "eye" : "eye-slash"}
@@ -134,7 +168,7 @@ export default function TaskList() {
           </TouchableOpacity>
         </View>
         <View style={styles.titleBar}>
-          <Text style={styles.title}>Hoje</Text>
+          <Text style={styles.title}>{props.title}</Text>
           <Text style={styles.subtitle}>{today}</Text>
         </View>
       </ImageBackground>
@@ -148,7 +182,7 @@ export default function TaskList() {
         />
       </View>
       <TouchableOpacity
-        style={styles.addButton}
+        style={[styles.addButton, { backgroundColor: getColor() }]}
         onPress={() => setShowAddTask(true)}
         activeOpacity={0.7}
       >
@@ -189,7 +223,7 @@ const styles = StyleSheet.create({
   iconBar: {
     flexDirection: "row",
     marginHorizontal: 20,
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     marginTop: Platform.OS === "ios" ? 40 : 30,
   },
   addButton: {
@@ -199,7 +233,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#B33B44",
     justifyContent: "center",
     alignItems: "center",
   },
