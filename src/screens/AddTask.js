@@ -36,7 +36,9 @@ export default function AddTask(props) {
     let datePicker = (
       <DateTimePicker
         value={initialState.date}
-        onChange={(_, date) => setInitialState({ date, showDatePicker: false })}
+        onChange={(_, date) =>
+          setInitialState({ ...initialState, date, showDatePicker: false })
+        }
         mode="date"
       />
     );

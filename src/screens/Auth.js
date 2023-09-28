@@ -5,9 +5,7 @@ import {
   Text,
   StyleSheet,
   View,
-  TextInput,
   TouchableOpacity,
-  Platform,
   Alert,
 } from "react-native";
 import backgroundImage from "../../assets/imgs/login.jpg";
@@ -18,23 +16,77 @@ import {
   Lato_400Regular,
   Lato_700Bold,
 } from "@expo-google-fonts/lato";
+import axios from "axios";
 
-export default function Auth() {
-  const [user, setUser] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confPassword: "",
-  });
+import AuthInput from "../components/AuthInput";
+import { server, showError, showSuccess } from "../common";
+import { useEffect } from "react";
+
+const initialState = {
+  name: "",
+  email: "luizlindo2416@gmail.com",
+  password: "A21w05c7",
+  confPassword: "",
+};
+
+export default function Auth(props) {
+  const [user, setUser] = useState(initialState);
   const [stageNew, setStageNew] = useState(false);
+  const [validForm, setValidForm] = useState(false);
 
   function signinOrSignup() {
     if (stageNew) {
-      Alert.alert("Sucesso", "Criar conta");
+      signup();
     } else {
-      Alert.alert("Sucesso", "Locar");
+      signin();
     }
   }
+
+  async function signup() {
+    try {
+      await axios.post(`${server}/signup`, {
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        confPassword: user.confPassword,
+      });
+
+      showSuccess("Usuário cadastrado!");
+      setStageNew(false);
+      setUser(initialState);
+    } catch (e) {
+      showError(e);
+    }
+  }
+
+  async function signin() {
+    try {
+      const res = await axios.post(`${server}/signin`, {
+        email: user.email,
+        password: user.password,
+      });
+
+      axios.defaults.headers.common[
+        "Authorization"
+      ] = `bearer ${res.data.token}`;
+      props.navigation.navigate("Home");
+    } catch (e) {
+      showError(e);
+    }
+  }
+
+  useEffect(() => {
+    const validations = [];
+    validations.push(user.email && user.email.includes("@"));
+    validations.push(user.password && user.password.length >= 8);
+
+    if (stageNew) {
+      validations.push(user.name && user.name.trim().length >= 3);
+      validations.push(user.password === user.confPassword);
+    }
+
+    setValidForm(validations.reduce((t, a) => t && a));
+  }, [user]);
 
   const [fonteLoaded] = useFonts({
     Lato_300Light,
@@ -54,20 +106,23 @@ export default function Auth() {
           {stageNew ? "Crie a sua conta" : "Informe seus dados"}
         </Text>
         {stageNew && (
-          <TextInput
+          <AuthInput
+            icon="user"
             placeholder="Nome"
             value={user.name}
             style={styles.input}
             onChangeText={(name) => setUser({ ...user, name })}
           />
         )}
-        <TextInput
+        <AuthInput
+          icon="at"
           placeholder="E-mail"
           value={user.email}
           style={styles.input}
           onChangeText={(email) => setUser({ ...user, email })}
         />
-        <TextInput
+        <AuthInput
+          icon="lock"
           placeholder="Senha"
           value={user.password}
           style={styles.input}
@@ -75,15 +130,21 @@ export default function Auth() {
           onChangeText={(password) => setUser({ ...user, password })}
         />
         {stageNew && (
-          <TextInput
+          <AuthInput
+            icon="asterisk"
             placeholder="Confirmar Senha"
             value={user.confPassword}
             style={styles.input}
             onChangeText={(confPassword) => setUser({ ...user, confPassword })}
           />
         )}
-        <TouchableOpacity onPress={signinOrSignup}>
-          <View style={styles.button}>
+        <TouchableOpacity onPress={signinOrSignup} disabled={!validForm}>
+          <View
+            style={[
+              styles.button,
+              validForm ? {} : { backgroundColor: "#AAA" },
+            ]}
+          >
             <Text style={styles.buttonText}>
               {stageNew ? "Cadastrar-se" : "Entrar"}
             </Text>
@@ -130,13 +191,13 @@ const styles = StyleSheet.create({
   input: {
     marginTop: 10,
     backgroundColor: "#FFF",
-    padding: Platform.OS == "ios" ? 15 : 10,
   },
   button: {
     backgroundColor: "#080",
     marginTop: 10,
     padding: 10,
     alignItems: "center",
+    borderRadius: 7,
   },
   buttonText: {
     fontFamily: "Lato_700Bold",
